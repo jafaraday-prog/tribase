@@ -121,3 +121,8 @@ void TriBaseInstrumentAudioProcessor::processBlockInternal(juce::AudioBuffer<Flo
 
 template void TriBaseInstrumentAudioProcessor::processBlockInternal<float>(juce::AudioBuffer<float>&, juce::MidiBuffer&);
 template void TriBaseInstrumentAudioProcessor::processBlockInternal<double>(juce::AudioBuffer<double>&, juce::MidiBuffer&);
+
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new TriBaseInstrumentAudioProcessor();
+}

@@ -1,0 +1,21 @@
+# Build + deps
+/build/
+/build-*/
+*_deps/
+CMakeCache.txt
+CMakeFiles/
+Testing/
+DerivedData/
+
+# Binaries & bundles
+*.component
+*.vst3
+*.a
+*.dylib
+*.app
+*.zip
+
+# Xcode noise
+*.xcworkspace/
+*.xcuserstate
+*.xcuserdata/

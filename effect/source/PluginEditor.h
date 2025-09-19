@@ -1,21 +1,28 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "PluginProcessor.h"
 
-class TriBaseBassManagerAudioProcessor;
-
-class TriBaseBassManagerAudioProcessorEditor : public juce::AudioProcessorEditor
+class TriBaseAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                    private juce::Timer
 {
 public:
-    explicit TriBaseBassManagerAudioProcessorEditor(TriBaseBassManagerAudioProcessor&);
-    ~TriBaseBassManagerAudioProcessorEditor() override = default;
+    explicit TriBaseAudioProcessorEditor (TriBaseAudioProcessor&);
+    ~TriBaseAudioProcessorEditor() override;
 
-    void paint(juce::Graphics& g) override;
+    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
-    TriBaseBassManagerAudioProcessor& audioProcessor;
-    juce::Label infoLabel;
+    void timerCallback() override;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TriBaseBassManagerAudioProcessorEditor)
+    TriBaseAudioProcessor& processor;
+
+    juce::Slider lookaheadSlider;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lookaheadAttachment;
+
+    float meterValue = 0.0f;
+    juce::Rectangle<int> meterBounds;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TriBaseAudioProcessorEditor)
 };

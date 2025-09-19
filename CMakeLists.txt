@@ -62,6 +62,8 @@ target_include_directories(TriBaseInstrument PRIVATE
 target_compile_definitions(TriBaseInstrument PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
+    JUCE_USE_SCREEN_CAPTURE_KIT=1
+    JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
 target_link_libraries(TriBaseInstrument
@@ -108,6 +110,8 @@ target_include_directories(TriBaseBassManager PRIVATE
 target_compile_definitions(TriBaseBassManager PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
+    JUCE_USE_SCREEN_CAPTURE_KIT=1
+    JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
 target_link_libraries(TriBaseBassManager

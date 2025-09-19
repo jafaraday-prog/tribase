@@ -1,161 +1,178 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-TriBaseBassManagerAudioProcessor::TriBaseBassManagerAudioProcessor()
-    : juce::AudioProcessor(
-          BusesProperties()
-              .withInput("Input", juce::AudioChannelSet::stereo(), true)
-              .withInput("Sidechain", juce::AudioChannelSet::stereo(), true, true)
-              .withOutput("Output", juce::AudioChannelSet::stereo(), true))
+#include <cmath>
+
+bool TriBaseAudioProcessor::supportsDoublePrecisionProcessing() const
 {
+    return true;
 }
 
-void TriBaseBassManagerAudioProcessor::prepareToPlay(double, int)
+bool TriBaseAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-}
+    const auto mainIn = layouts.getChannelSet (true, 0);
+    const auto mainOut = layouts.getChannelSet (false, 0);
 
-void TriBaseBassManagerAudioProcessor::releaseResources()
-{
-}
+    const auto isMonoOrStereo = [] (const juce::AudioChannelSet& set)
+    {
+        return set == juce::AudioChannelSet::mono() || set == juce::AudioChannelSet::stereo();
+    };
 
-bool TriBaseBassManagerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
-{
-    const auto mainInput = layouts.getMainInputChannelSet();
-    const auto mainOutput = layouts.getMainOutputChannelSet();
+    if (! isMonoOrStereo (mainIn) || ! isMonoOrStereo (mainOut))
+        return false;
 
-    const auto isValidMainLayout =
-        (mainInput == juce::AudioChannelSet::mono() || mainInput == juce::AudioChannelSet::stereo()) && mainInput == mainOutput;
-
-    if (!isValidMainLayout)
+    if (mainIn.size() != mainOut.size())
         return false;
 
     if (layouts.inputBuses.size() > 1)
     {
-        const auto sidechainLayout = layouts.inputBuses[1];
-        if (sidechainLayout != juce::AudioChannelSet::stereo())
+        const auto sidechain = layouts.getChannelSet (true, 1);
+        if (sidechain != juce::AudioChannelSet::stereo() && sidechain != juce::AudioChannelSet::disabled())
             return false;
     }
 
     return true;
 }
 
-void TriBaseBassManagerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void TriBaseAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+{
+    sampleRateHz = sampleRate;
+    maxBlock = samplesPerBlock;
+
+    const auto* lookahead = apvts.getRawParameterValue ("lookaheadMs");
+    const auto lookaheadMs = lookahead != nullptr ? lookahead->load() : 0.0f;
+
+    latencySamples = static_cast<int> (std::round (sampleRateHz * (static_cast<double> (lookaheadMs) / 1000.0)));
+    setLatencySamples (latencySamples);
+}
+
+void TriBaseAudioProcessor::releaseResources()
+{
+}
+
+int TriBaseAudioProcessor::getLatencySamples() const
+{
+    return latencySamples;
+}
+
+void TriBaseAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    juce::ignoreUnused(midiMessages);
-
-    copyMainInputToOutput(buffer);
-
-    if (getBusCount(true) > 1)
-    {
-        auto& sidechainBuffer = getBusBuffer(buffer, true, 1);
-        juce::ignoreUnused(sidechainBuffer);
-    }
+    process (buffer, midiMessages);
 }
 
-void TriBaseBassManagerAudioProcessor::processBlock(juce::AudioBuffer<double>& buffer, juce::MidiBuffer& midiMessages)
+void TriBaseAudioProcessor::processBlock (juce::AudioBuffer<double>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    juce::ignoreUnused(midiMessages);
-
-    copyMainInputToOutput(buffer);
-
-    if (getBusCount(true) > 1)
-    {
-        auto& sidechainBuffer = getBusBuffer(buffer, true, 1);
-        juce::ignoreUnused(sidechainBuffer);
-    }
+    process (buffer, midiMessages);
 }
 
-juce::AudioProcessorEditor* TriBaseBassManagerAudioProcessor::createEditor()
+void TriBaseAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    return new TriBaseBassManagerAudioProcessorEditor(*this);
+    if (auto state = apvts.copyState().createXml())
+        copyXmlToBinary (*state, destData);
 }
 
-bool TriBaseBassManagerAudioProcessor::hasEditor() const
+void TriBaseAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+{
+    if (auto state = getXmlFromBinary (data, sizeInBytes))
+        apvts.replaceState (juce::ValueTree::fromXml (*state));
+}
+
+const juce::String TriBaseAudioProcessor::getName() const
+{
+    return JucePlugin_Name;
+}
+
+bool TriBaseAudioProcessor::hasEditor() const
 {
     return true;
 }
 
-const juce::String TriBaseBassManagerAudioProcessor::getName() const
+juce::AudioProcessorEditor* TriBaseAudioProcessor::createEditor()
 {
-    return "TriBase Bass Manager";
+    return new TriBaseAudioProcessorEditor (*this);
 }
 
-bool TriBaseBassManagerAudioProcessor::acceptsMidi() const
-{
-    return false;
-}
-
-bool TriBaseBassManagerAudioProcessor::producesMidi() const
+bool TriBaseAudioProcessor::acceptsMidi() const
 {
     return false;
 }
 
-bool TriBaseBassManagerAudioProcessor::isMidiEffect() const
+bool TriBaseAudioProcessor::producesMidi() const
 {
     return false;
 }
 
-double TriBaseBassManagerAudioProcessor::getTailLengthSeconds() const
+bool TriBaseAudioProcessor::isMidiEffect() const
+{
+    return false;
+}
+
+double TriBaseAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int TriBaseBassManagerAudioProcessor::getNumPrograms()
+int TriBaseAudioProcessor::getNumPrograms()
 {
     return 1;
 }
 
-int TriBaseBassManagerAudioProcessor::getCurrentProgram()
+int TriBaseAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void TriBaseBassManagerAudioProcessor::setCurrentProgram(int)
+void TriBaseAudioProcessor::setCurrentProgram (int)
 {
 }
 
-const juce::String TriBaseBassManagerAudioProcessor::getProgramName(int)
+const juce::String TriBaseAudioProcessor::getProgramName (int)
 {
-    return "Default";
+    return {};
 }
 
-void TriBaseBassManagerAudioProcessor::changeProgramName(int, const juce::String&)
+void TriBaseAudioProcessor::changeProgramName (int, const juce::String&)
 {
 }
 
-void TriBaseBassManagerAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+template <typename SampleType>
+void TriBaseAudioProcessor::process (juce::AudioBuffer<SampleType>& buffer, juce::MidiBuffer&)
 {
-    juce::ignoreUnused(destData);
-}
+    auto mainIn = getBusBuffer (buffer, true, 0);
+    auto mainOut = getBusBuffer (buffer, false, 0);
 
-void TriBaseBassManagerAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
-{
-    juce::ignoreUnused(data, sizeInBytes);
-}
+    mainOut.makeCopyOf (mainIn);
 
-template <typename FloatType>
-void TriBaseBassManagerAudioProcessor::copyMainInputToOutput(juce::AudioBuffer<FloatType>& buffer)
-{
-    auto& input = getBusBuffer(buffer, true, 0);
-    auto& output = getBusBuffer(buffer, false, 0);
+    for (int ch = mainOut.getNumChannels(); ch < buffer.getNumChannels(); ++ch)
+        buffer.clear (ch, 0, buffer.getNumSamples());
 
-    if (&input == &output)
-        return;
-
-    const auto numSamples = output.getNumSamples();
-    const auto numInputChannels = input.getNumChannels();
-    const auto numOutputChannels = output.getNumChannels();
-
-    for (int channel = 0; channel < numOutputChannels; ++channel)
+    if (hasSidechainEnabled() && getBusCount (true) > 1)
     {
-        if (channel < numInputChannels)
-            output.copyFrom(channel, 0, input, channel, 0, numSamples);
-        else
-            output.clear(channel, 0, numSamples);
+        auto sidechainBuffer = getBusBuffer (buffer, true, 1);
+        if (sidechainBuffer.getNumChannels() > 0)
+        {
+            double sumSquares = 0.0;
+            for (int ch = 0; ch < sidechainBuffer.getNumChannels(); ++ch)
+            {
+                const auto* data = sidechainBuffer.getReadPointer (ch);
+                for (int i = 0; i < sidechainBuffer.getNumSamples(); ++i)
+                {
+                    const auto sample = static_cast<double> (data[i]);
+                    sumSquares += sample * sample;
+                }
+            }
+
+            const auto totalSamples = static_cast<double> (sidechainBuffer.getNumChannels() * sidechainBuffer.getNumSamples());
+            const auto rms = totalSamples > 0.0 ? std::sqrt (sumSquares / totalSamples) : 0.0;
+
+            scLevel.store (juce::jlimit (0.0f, 1.0f, static_cast<float> (rms)));
+        }
     }
 }
 
-template void TriBaseBassManagerAudioProcessor::copyMainInputToOutput<float>(juce::AudioBuffer<float>&);
-template void TriBaseBassManagerAudioProcessor::copyMainInputToOutput<double>(juce::AudioBuffer<double>&);
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new TriBaseAudioProcessor();
+}

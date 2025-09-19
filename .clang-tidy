@@ -1,0 +1,4 @@
+Checks: '-*,clang-analyzer-*,modernize-*,performance-*'
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(instrument|effect|shared)/'
+FormatStyle: none

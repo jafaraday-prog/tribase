@@ -1,7 +1,7 @@
 include(FetchContent)
 
-set(JUCE_GIT_TAG "7.0.12" CACHE STRING "JUCE version to fetch")
-set(VST3_SDK_GIT_TAG "v3.7.11_build_19" CACHE STRING "VST3 SDK version to fetch")
+set(JUCE_GIT_TAG "8.0.9" CACHE STRING "JUCE version to fetch")
+set(VST3_SDK_GIT_TAG "v3.7.14_build_55" CACHE STRING "VST3 SDK version to fetch")
 
 FetchContent_Declare(
     juce

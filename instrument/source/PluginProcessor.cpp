@@ -8,10 +8,10 @@ TriBaseInstrumentAudioProcessor::TriBaseInstrumentAudioProcessor()
 
     constexpr auto numVoices = 8;
     for (int i = 0; i < numVoices; ++i)
-        synthesiser.addVoice(std::make_unique<SynthVoice>());
+        synthesiser.addVoice(new SynthVoice());
 
     synthesiser.clearSounds();
-    synthesiser.addSound(std::make_unique<SynthSound>());
+    synthesiser.addSound(new SynthSound());
     synthesiser.setNoteStealingEnabled(true);
 }
 

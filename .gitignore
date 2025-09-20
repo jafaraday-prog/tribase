@@ -1,21 +1,33 @@
-# Build + deps
+# build products
 /build/
-/build-*/
-*_deps/
-CMakeCache.txt
-CMakeFiles/
-Testing/
-DerivedData/
-
-# Binaries & bundles
-*.component
+/_build/
+/out/
+/bin/
+/lib/
+/_dist/
+/dist/
+/_debug/
+/_release/
 *.vst3
+*.component
 *.a
-*.dylib
-*.app
-*.zip
+*.o
+*.obj
+*.ilk
+*.pdb
+*_autogen*
+/.deps/
+/build/_deps/
+/build/*
 
-# Xcode noise
-*.xcworkspace/
-*.xcuserstate
-*.xcuserdata/
+# IDE
+.DS_Store
+.vscode/
+.idea/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+*.cmake
+_compile_commands.json

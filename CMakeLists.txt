@@ -133,3 +133,5 @@ target_link_libraries(TriBaseBassManager
         juce::juce_audio_processors
         juce::juce_dsp
 )
+
+add_subdirectory(kick)

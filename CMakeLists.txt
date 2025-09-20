@@ -53,8 +53,14 @@ set(TriBaseInstrumentSources
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${TriBaseInstrumentSources})
 
 target_sources(TriBaseInstrument PRIVATE ${TriBaseInstrumentSources})
+target_sources(TriBaseInstrument PRIVATE
+    shared/ui/TriBaseStyle.h
+    shared/ui/XenoLookAndFeel.h
+    shared/ui/XenoLookAndFeel.cpp
+)
 
 target_include_directories(TriBaseInstrument PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     "${TRIBASE_SHARED_INCLUDE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/instrument/source"
 )
@@ -101,6 +107,12 @@ set(TriBaseBassManagerSources
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${TriBaseBassManagerSources})
 
 target_sources(TriBaseBassManager PRIVATE ${TriBaseBassManagerSources})
+target_sources(TriBaseBassManager PRIVATE
+    shared/ui/TriBaseStyle.h
+    shared/ui/XenoLookAndFeel.h
+    shared/ui/XenoLookAndFeel.cpp
+)
+target_sources(TriBaseBassManager PRIVATE shared/dsp/LookaheadDetector.cpp)
 
 target_include_directories(TriBaseBassManager PRIVATE
     "${TRIBASE_SHARED_INCLUDE_DIR}"

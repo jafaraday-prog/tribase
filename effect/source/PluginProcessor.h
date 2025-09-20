@@ -2,6 +2,9 @@
 
 #include <JuceHeader.h>
 #include <atomic>
+#include <vector>
+#include <juce_dsp/juce_dsp.h>
+#include "dsp/LookaheadDetector.h"
 
 class TriBaseAudioProcessor : public juce::AudioProcessor
 {
@@ -42,6 +45,9 @@ public:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     std::atomic<float> scLevel { 0.0f };
+    std::atomic<float> meterScDb { -60.0f };
+    std::atomic<float> meterGrDb { 0.0f };
+
     double sampleRateHz { 44100.0 };
     int maxBlock { 512 };
     int latencySamples { 0 };
@@ -49,8 +55,28 @@ public:
     bool hasSidechainEnabled() const;
 
 private:
-    template <typename SampleType>
-    void process (juce::AudioBuffer<SampleType>&, juce::MidiBuffer&);
+    void applyParamUpdatesIfChanged();
+    void refreshParams();
+    float computeGainDb (float detectorDb);
+
+    LookaheadDetector detector;
+    float prevLookaheadMs { -1.0f };
+
+    // user params cached
+    float threshDb { -24.0f };
+    float ratio { 4.0f };
+    float atkMs { 5.0f };
+    float relMs { 120.0f };
+    float depthDb { 18.0f };
+    float mix { 1.0f };
+    float makeupDb { 0.0f };
+
+    // smoothing
+    float envDb { -96.0f };
+    float grDb { 0.0f };
+
+    // lookahead audio
+    std::vector<juce::dsp::DelayLine<float>> delayLanes;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TriBaseAudioProcessor)
 };
@@ -105,6 +131,48 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout TriBaseAudioProcessor
         "SC Filter Hi (Hz)",
         juce::NormalisableRange<float> (80.0f, 150.0f),
         120.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "threshold",
+        "Threshold (dB)",
+        juce::NormalisableRange<float> (-60.0f, 0.0f),
+        -24.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "ratio",
+        "Ratio",
+        juce::NormalisableRange<float> (1.0f, 20.0f),
+        4.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "attackMs",
+        "Attack (ms)",
+        juce::NormalisableRange<float> (0.1f, 50.0f),
+        5.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "releaseMs",
+        "Release (ms)",
+        juce::NormalisableRange<float> (10.0f, 500.0f),
+        120.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "depthDb",
+        "Depth (dB)",
+        juce::NormalisableRange<float> (0.0f, 48.0f),
+        18.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "mix",
+        "Mix (%)",
+        juce::NormalisableRange<float> (0.0f, 100.0f),
+        100.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat>(
+        "makeupDb",
+        "Makeup (dB)",
+        juce::NormalisableRange<float> (-24.0f, 24.0f),
+        0.0f));
 
     return layout;
 }

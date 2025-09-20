@@ -92,13 +92,19 @@ const float* LookaheadDetector::processSidechain (const float* const* sc, int nu
 
     if (filtType == 1)
     {
-        hpf1.processSamples (mono, numSamples);
-        hpf2.processSamples (mono, numSamples);
+        juce::dsp::AudioBlock<float> block (scMono);
+        auto sub = block.getSubBlock (0, static_cast<size_t> (numSamples));
+        juce::dsp::ProcessContextReplacing<float> ctx (sub);
+        hpf1.process (ctx);
+        hpf2.process (ctx);
     }
     else if (filtType == 2)
     {
-        bpf1.processSamples (mono, numSamples);
-        bpf2.processSamples (mono, numSamples);
+        juce::dsp::AudioBlock<float> block (scMono);
+        auto sub = block.getSubBlock (0, static_cast<size_t> (numSamples));
+        juce::dsp::ProcessContextReplacing<float> ctx (sub);
+        bpf1.process (ctx);
+        bpf2.process (ctx);
     }
 
     auto* env = envBuf.getWritePointer (0);

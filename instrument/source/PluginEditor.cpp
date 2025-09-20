@@ -1,23 +1,37 @@
 #include "PluginEditor.h"
-#include "PluginProcessor.h"
 
-TriBaseInstrumentAudioProcessorEditor::TriBaseInstrumentAudioProcessorEditor(TriBaseInstrumentAudioProcessor& processor)
-    : juce::AudioProcessorEditor(&processor), audioProcessor(processor)
+namespace
 {
-    infoLabel.setText("TriBase Instrument\nPrototype synthesiser", juce::dontSendNotification);
-    infoLabel.setJustificationType(juce::Justification::centred);
-    infoLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-    addAndMakeVisible(infoLabel);
-
-    setSize(400, 300);
+constexpr juce::uint32 dark = 0xFF0A0E12;
+constexpr juce::uint32 textColour = 0xFFAEEAFF;
 }
 
-void TriBaseInstrumentAudioProcessorEditor::paint(juce::Graphics& g)
+TriBaseInstrumentAudioProcessorEditor::TriBaseInstrumentAudioProcessorEditor (TriBaseInstrumentAudioProcessor& processor)
+    : juce::AudioProcessorEditor (&processor), audioProcessor (processor)
 {
-    g.fillAll(juce::Colours::darkslategrey);
+    xenoLAF = std::make_unique<XenoLookAndFeel>();
+    setLookAndFeel (xenoLAF.get());
+    setOpaque (true);
+    setColour (juce::ResizableWindow::backgroundColourId, juce::Colour (dark));
+    setSize (720, 420);
+}
+
+TriBaseInstrumentAudioProcessorEditor::~TriBaseInstrumentAudioProcessorEditor()
+{
+    setLookAndFeel (nullptr);
+    xenoLAF.reset();
+}
+
+void TriBaseInstrumentAudioProcessorEditor::paint (juce::Graphics& g)
+{
+    g.fillAll (juce::Colour (dark));
+    g.setColour (juce::Colour (textColour).withAlpha (0.8f));
+    g.setFont (16.0f);
+    g.drawFittedText ("TriBase Instrument\nPrototype synthesiser",
+                      getLocalBounds().reduced (16),
+                      juce::Justification::centred, 2);
 }
 
 void TriBaseInstrumentAudioProcessorEditor::resized()
 {
-    infoLabel.setBounds(getLocalBounds());
 }

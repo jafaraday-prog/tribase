@@ -1,21 +1,25 @@
 #pragma once
 
 #include <JuceHeader.h>
-
-class TriBaseInstrumentAudioProcessor;
+#include <memory>
+#include "PluginProcessor.h"
+#include "shared/ui/TriBaseStyle.h"
+#include "shared/ui/XenoLookAndFeel.h"
 
 class TriBaseInstrumentAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    explicit TriBaseInstrumentAudioProcessorEditor(TriBaseInstrumentAudioProcessor&);
-    ~TriBaseInstrumentAudioProcessorEditor() override = default;
+    explicit TriBaseInstrumentAudioProcessorEditor (TriBaseInstrumentAudioProcessor&);
+    ~TriBaseInstrumentAudioProcessorEditor() override;
 
-    void paint(juce::Graphics& g) override;
+    void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
     TriBaseInstrumentAudioProcessor& audioProcessor;
-    juce::Label infoLabel;
+    std::unique_ptr<XenoLookAndFeel> xenoLAF = nullptr;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TriBaseInstrumentAudioProcessorEditor)
+    bool isOpaque() const { return true; } // enable fast bg fill
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TriBaseInstrumentAudioProcessorEditor)
 };
